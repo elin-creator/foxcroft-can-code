@@ -269,7 +269,7 @@ async def get_diagnostic(company_id: int, diagnostic_id: int):
         await db.close()
 
 
-@router.post("/{company_id}/diagnostics/{diagnostic_id}/pdf")
+@router.get("/{company_id}/diagnostics/{diagnostic_id}/pdf")
 async def generate_pdf(company_id: int, diagnostic_id: int):
     """Generate PDF for a diagnostic."""
     try:
