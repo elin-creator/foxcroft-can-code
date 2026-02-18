@@ -47,7 +47,8 @@ async def extract_narrative_themes(company_id: int, ticker: str) -> dict:
 
         docs_text = "\n\n---\n\n".join(doc_summaries)
 
-        prompt = f"""Analyze the following public documents for {ticker} and extract the strategic narrative positioning.
+        prompt = f"""Analyze the following recent public documents for {ticker} and extract the CURRENT strategic narrative positioning.
+Focus on the most recent documents — weight newer sources more heavily. Today's date is {datetime.now().strftime('%Y-%m-%d')}.
 
 DOCUMENTS:
 {docs_text}

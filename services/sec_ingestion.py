@@ -122,7 +122,8 @@ async def search_edgar_fulltext(query: str, date_range: str = None, forms: str =
 
 
 async def ingest_sec_filings(company_id: int, ticker: str, cik: str = None) -> dict:
-    """Main ingestion function: fetch and store recent SEC filings for a company."""
+    """Main ingestion function: fetch and store recent SEC filings for a company.
+    Focuses on most recent filings (last 90 days prioritized)."""
     db = await get_db()
     try:
         if not cik:
@@ -136,8 +137,17 @@ async def ingest_sec_filings(company_id: int, ticker: str, cik: str = None) -> d
 
         filings = await fetch_recent_filings(cik, count=15)
 
+        # Sort by filing date descending to prioritize most recent
+        filings.sort(key=lambda f: f.get("filing_date", ""), reverse=True)
+
         ingested = 0
+        cutoff_date = (datetime.now() - timedelta(days=180)).strftime("%Y-%m-%d")
+
         for f in filings:
+            # Skip filings older than 6 months
+            if f.get("filing_date", "") < cutoff_date:
+                continue
+
             # Check if already ingested
             existing = await db.execute(
                 "SELECT id FROM documents WHERE company_id = ? AND source_url = ?",
