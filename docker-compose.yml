@@ -1,0 +1,14 @@
+services:
+  pngsm:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - PNGSM_DB_PATH=/app/data/monitor.db
+    volumes:
+      - pngsm-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  pngsm-data:

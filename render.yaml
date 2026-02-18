@@ -1,0 +1,23 @@
+services:
+  - type: web
+    plan: starter
+    name: signal-monitor
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2 --app-dir /opt/render/project/src"
+    healthCheckPath: /health
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: PNGSM_DB_PATH
+        value: /var/data/monitor.db
+      - key: PNGSM_REPORT_DIR
+        value: /var/data/reports
+      - key: PYTHON_VERSION
+        value: "3.12.3"
+      - key: PYTHONPATH
+        value: /opt/render/project/src
+    disk:
+      name: pngsm-data
+      mountPath: /var/data
+      sizeGB: 1
