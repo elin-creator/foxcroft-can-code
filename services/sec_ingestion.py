@@ -6,15 +6,27 @@ Requires a User-Agent header per SEC policy.
 
 import httpx
 import json
+import os
 import re
+import asyncio
 from datetime import datetime, timedelta
 from typing import Optional
 from models.database import get_db
 
 SEC_BASE = "https://efts.sec.gov/LATEST"
 SEC_FILINGS = "https://data.sec.gov"
-USER_AGENT = "PNGSMonitor/1.0 (contact@example.com)"
-HEADERS = {"User-Agent": USER_AGENT, "Accept": "application/json"}
+# SEC requires: "Sample Company Name AdminContact@<sample company domain>.com"
+# Users should update this with their real email
+USER_AGENT = os.environ.get(
+    "SEC_USER_AGENT",
+    "SignalMonitor/1.0 (admin@signalmonitor.app)"
+)
+HEADERS = {
+    "User-Agent": USER_AGENT,
+    "Accept": "application/json",
+    "Accept-Encoding": "gzip, deflate",
+    "Host": "data.sec.gov",
+}
 
 # Filing types we care about
 RELEVANT_FILINGS = ["10-K", "10-Q", "8-K", "DEF 14A", "DEFA14A", "SC 13D", "SC 13D/A"]
@@ -22,13 +34,17 @@ RELEVANT_FILINGS = ["10-K", "10-Q", "8-K", "DEF 14A", "DEFA14A", "SC 13D", "SC 1
 
 async def lookup_cik(ticker: str) -> Optional[str]:
     """Look up CIK number from ticker via SEC company tickers JSON."""
-    async with httpx.AsyncClient(headers=HEADERS, timeout=30) as client:
-        resp = await client.get(f"{SEC_FILINGS}/files/company_tickers.json")
-        if resp.status_code == 200:
-            data = resp.json()
-            for entry in data.values():
-                if entry.get("ticker", "").upper() == ticker.upper():
-                    return str(entry["cik_str"]).zfill(10)
+    headers = {**HEADERS, "Host": "data.sec.gov"}
+    async with httpx.AsyncClient(headers=headers, timeout=30, follow_redirects=True) as client:
+        try:
+            resp = await client.get(f"{SEC_FILINGS}/files/company_tickers.json")
+            if resp.status_code == 200:
+                data = resp.json()
+                for entry in data.values():
+                    if entry.get("ticker", "").upper() == ticker.upper():
+                        return str(entry["cik_str"]).zfill(10)
+        except Exception as e:
+            print(f"[SEC] CIK lookup error for {ticker}: {e}", flush=True)
     return None
 
 
@@ -39,10 +55,18 @@ async def fetch_recent_filings(cik: str, filing_types: list[str] = None, count: 
 
     cik_padded = cik.zfill(10)
     url = f"{SEC_FILINGS}/submissions/CIK{cik_padded}.json"
+    headers = {**HEADERS, "Host": "data.sec.gov"}
 
-    async with httpx.AsyncClient(headers=HEADERS, timeout=30) as client:
-        resp = await client.get(url)
-        if resp.status_code != 200:
+    async with httpx.AsyncClient(headers=headers, timeout=30, follow_redirects=True) as client:
+        try:
+            # Rate limit: SEC allows 10 req/sec
+            await asyncio.sleep(0.15)
+            resp = await client.get(url)
+            if resp.status_code != 200:
+                print(f"[SEC] Filings fetch failed: HTTP {resp.status_code} for CIK {cik_padded}", flush=True)
+                return []
+        except Exception as e:
+            print(f"[SEC] Filings fetch error: {e}", flush=True)
             return []
 
         data = resp.json()
@@ -55,7 +79,7 @@ async def fetch_recent_filings(cik: str, filing_types: list[str] = None, count: 
         primary_docs = recent.get("primaryDocument", [])
         descriptions = recent.get("primaryDocDescription", [])
 
-        for i in range(min(len(forms), count * 3)):  # scan more to find enough matches
+        for i in range(min(len(forms), count * 3)):
             if forms[i] in filing_types:
                 acc_clean = accessions[i].replace("-", "")
                 doc_url = f"{SEC_FILINGS}/Archives/edgar/data/{cik_padded}/{acc_clean}/{primary_docs[i]}"
@@ -74,15 +98,33 @@ async def fetch_recent_filings(cik: str, filing_types: list[str] = None, count: 
 
 async def fetch_filing_text(url: str, max_chars: int = 50000) -> str:
     """Fetch the text content of a filing. Strips HTML tags for processing."""
-    async with httpx.AsyncClient(headers=HEADERS, timeout=60) as client:
-        resp = await client.get(url)
-        if resp.status_code != 200:
+    # Determine correct Host header based on URL
+    if "data.sec.gov" in url:
+        host = "data.sec.gov"
+    elif "sec.gov" in url:
+        host = "www.sec.gov"
+    else:
+        host = ""
+    
+    headers = {**HEADERS}
+    if host:
+        headers["Host"] = host
+
+    async with httpx.AsyncClient(headers=headers, timeout=60, follow_redirects=True) as client:
+        try:
+            await asyncio.sleep(0.15)  # Rate limit
+            resp = await client.get(url)
+            if resp.status_code != 200:
+                print(f"[SEC] Filing text fetch failed: HTTP {resp.status_code} for {url[:80]}", flush=True)
+                return ""
+            text = resp.text
+            # Strip HTML tags for plain text extraction
+            text = re.sub(r'<[^>]+>', ' ', text)
+            text = re.sub(r'\s+', ' ', text).strip()
+            return text[:max_chars]
+        except Exception as e:
+            print(f"[SEC] Filing text error: {e}", flush=True)
             return ""
-        text = resp.text
-        # Strip HTML tags for plain text extraction
-        text = re.sub(r'<[^>]+>', ' ', text)
-        text = re.sub(r'\s+', ' ', text).strip()
-        return text[:max_chars]
 
 
 async def search_edgar_fulltext(query: str, date_range: str = None, forms: str = None, count: int = 10) -> list[dict]:
