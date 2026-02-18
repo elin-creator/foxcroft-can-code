@@ -226,6 +226,10 @@ body {
 .doc-row:last-child { border-bottom: none; }
 .doc-type-badge { font-family: var(--mono); font-size: 10px; font-weight: 500; min-width: 64px; text-align: center; padding: 3px 8px; border-radius: 4px; background: var(--ivory-warm); color: var(--slate); text-transform: uppercase; letter-spacing: 0.3px; }
 .doc-title-text { flex:1; color: var(--charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-title-text a { color: #2B4A72; text-decoration: none; transition: color 0.2s; }
+.doc-title-text a:hover { color: #B8703D; text-decoration: underline; }
+.doc-link-icon { flex-shrink: 0; color: #B8AFA3; font-size: 11px; text-decoration: none; padding: 4px 6px; border-radius: 4px; transition: all 0.2s; }
+.doc-link-icon:hover { color: #2B4A72; background: #E8EEF4; }
 .doc-date { font-family: var(--mono); font-size: 11px; color: var(--stone); white-space: nowrap; }
 
 /* ═══ MODAL ═══ */
@@ -397,7 +401,7 @@ async function renderDashboard(){
 
     if(latestDiag){try{const full=await api(`/api/analysis/${sel.id}/diagnostics/${latestDiag.id}`);const impls=full.advisory_implications_json||[];if(impls.length){h+='<div class="section-card"><div class="section-header"><div class="section-title">Advisory Implications</div><span class="section-badge badge-sage">Options</span></div><div class="section-body">';h+=impls.map(a=>`<div class="advisory-item"><div class="advisory-label">Advisory Option</div><div class="advisory-text">${a.implication}</div>${a.options?.length?`<ul class="advisory-options">${a.options.map(o=>`<li>${o}</li>`).join('')}</ul>`:''}${a.timing?`<div class="advisory-timing">Timing: ${a.timing.replace(/_/g,' ')}</div>`:''}</div>`).join('');h+='</div></div>'}}catch(e){}}
 
-    if(docList.length){h+='<div class="section-card"><div class="section-header"><div class="section-title">Recent Documents</div><span class="section-badge badge-navy">'+docList.length+' latest</span></div><div class="section-body">';h+=docList.map(d=>`<div class="doc-row"><span class="doc-type-badge">${d.filing_type||d.source_type.replace('_',' ')}</span><span class="doc-title-text">${d.title||'Untitled'}</span><span class="doc-date">${d.published_date?.slice(0,10)||''}</span></div>`).join('');h+='</div></div>'}
+if(docList.length){h+='<div class="section-card"><div class="section-header"><div class="section-title">Recent Documents</div><span class="section-badge badge-navy">'+docList.length+' latest</span></div><div class="section-body">';h+=docList.map(d=>{const hasUrl=d.source_url&&d.source_url.startsWith('http');const title=d.title||'Untitled';return`<div class="doc-row"><span class="doc-type-badge">${d.filing_type||d.source_type.replace('_',' ')}</span><span class="doc-title-text">${hasUrl?`<a href="${d.source_url}" target="_blank" rel="noopener">${title}</a>`:title}</span>${hasUrl?`<a href="${d.source_url}" target="_blank" rel="noopener" class="doc-link-icon" title="Open source">↗</a>`:''}<span class="doc-date">${d.published_date?.slice(0,10)||''}</span></div>`}).join('');h+='</div></div>'}
 
     area.innerHTML=h;
 }
