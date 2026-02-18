@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal Monitor — Narrative & Governance Advisory Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+    --ivory: #FAF8F4;
+    --ivory-warm: #F5F1EA;
+    --parchment: #EDE8DF;
+    --sand: #D8D0C4;
+    --stone: #B8AFA3;
+    --slate: #7A7265;
+    --charcoal: #3D3830;
+    --ink: #1C1916;
+
+    --navy-deep: #162234;
+    --navy: #1E3150;
+    --navy-mid: #2B4A72;
+    --navy-light: #3E6899;
+    --navy-wash: #E8EEF4;
+    --navy-tint: #F2F5F9;
+
+    --copper: #B8703D;
+    --copper-light: #D4945F;
+    --copper-wash: #FDF5EE;
+    --vermillion: #C14B3F;
+    --vermillion-wash: #FDF0EE;
+    --sage: #4A7C5E;
+    --sage-wash: #EEF5F0;
+    --amber: #C4903A;
+    --amber-wash: #FEF8ED;
+
+    --serif: 'Cormorant Garamond', 'Georgia', serif;
+    --sans: 'IBM Plex Sans', 'Helvetica Neue', sans-serif;
+    --mono: 'IBM Plex Mono', 'Consolas', monospace;
+
+    --shadow-sm: 0 1px 2px rgba(28,25,22,0.04);
+    --shadow-md: 0 2px 8px rgba(28,25,22,0.06), 0 1px 2px rgba(28,25,22,0.04);
+    --shadow-lg: 0 4px 24px rgba(28,25,22,0.08), 0 2px 8px rgba(28,25,22,0.04);
+    --shadow-card: 0 1px 3px rgba(28,25,22,0.05);
+
+    --radius: 6px;
+    --radius-lg: 10px;
+    --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+*,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: var(--sans);
+    background: var(--ivory);
+    color: var(--charcoal);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+}
+::selection { background: var(--navy-wash); color: var(--navy-deep); }
+
+.app { display: flex; min-height: 100vh; }
+
+/* ═══ SIDEBAR ═══ */
+.sidebar {
+    width: 272px;
+    background: var(--navy-deep);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top:0; left:0; bottom:0;
+    z-index: 100;
+}
+.sidebar-header {
+    padding: 28px 24px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.sidebar-logo { display: flex; align-items: center; gap: 12px; }
+.sidebar-logo .mark {
+    width: 32px; height: 32px;
+    border: 1.5px solid var(--copper-light);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--serif); font-weight: 600; font-size: 16px;
+    color: var(--copper-light); letter-spacing: -0.5px;
+}
+.sidebar-logo h1 { font-family: var(--sans); font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.92); letter-spacing: 0.2px; }
+.sidebar-logo .subtitle { font-size: 11px; color: rgba(255,255,255,0.38); font-weight: 400; letter-spacing: 0.3px; margin-top: 1px; }
+.sidebar-nav { flex:1; overflow-y: auto; padding: 20px 12px; }
+.sidebar-nav::-webkit-scrollbar { width: 3px; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+.nav-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.8px; color: rgba(255,255,255,0.28); padding: 0 12px 10px; margin-top: 8px; }
+.nav-list { list-style: none; }
+.nav-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 9px 12px; border-radius: var(--radius);
+    cursor: pointer; transition: all var(--transition);
+    font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.55); margin-bottom: 1px;
+}
+.nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.85); }
+.nav-item.active { background: rgba(255,255,255,0.1); color: #fff; font-weight: 500; }
+.nav-item .ticker-badge {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7);
+    padding: 2px 7px; border-radius: 4px; letter-spacing: 0.3px;
+}
+.nav-item.active .ticker-badge { background: rgba(184,112,61,0.25); color: var(--copper-light); }
+.nav-item .co-name { flex:1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,0.06); }
+.btn-add {
+    width: 100%; display: flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 10px; border-radius: var(--radius);
+    border: 1px dashed rgba(255,255,255,0.15); background: transparent;
+    color: rgba(255,255,255,0.5); font-family: var(--sans); font-size: 13px;
+    cursor: pointer; transition: all var(--transition);
+}
+.btn-add:hover { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.04); }
+
+/* ═══ MAIN ═══ */
+.main { margin-left: 272px; flex:1; min-width:0; display: flex; flex-direction: column; }
+
+.topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 36px; height: 64px; border-bottom: 1px solid var(--parchment);
+    background: var(--ivory); position: sticky; top:0; z-index: 50;
+}
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.topbar-title { font-family: var(--serif); font-size: 22px; font-weight: 600; color: var(--ink); letter-spacing: -0.3px; }
+.topbar-sector { font-size: 12px; color: var(--slate); background: var(--ivory-warm); padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+.topbar-actions { display: flex; gap: 8px; }
+
+/* ═══ BUTTONS ═══ */
+.btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border: 1px solid var(--sand); border-radius: var(--radius);
+    background: #fff; color: var(--charcoal); font-family: var(--sans);
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: all var(--transition); white-space: nowrap; box-shadow: var(--shadow-sm);
+}
+.btn:hover { background: var(--ivory-warm); border-color: var(--stone); box-shadow: var(--shadow-md); }
+.btn:active { transform: translateY(0.5px); }
+.btn-primary { background: var(--navy); color: #fff; border-color: var(--navy); box-shadow: 0 1px 3px rgba(30,49,80,0.2); }
+.btn-primary:hover { background: var(--navy-mid); border-color: var(--navy-mid); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+
+.content { padding: 28px 36px 48px; flex:1; max-width: 1340px; }
+
+/* ═══ METRICS ═══ */
+.metrics-strip { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 28px; }
+.metric-card {
+    background: #fff; border: 1px solid var(--parchment); border-radius: var(--radius-lg);
+    padding: 20px 22px; box-shadow: var(--shadow-card); transition: box-shadow var(--transition);
+}
+.metric-card:hover { box-shadow: var(--shadow-md); }
+.metric-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.2px; color: var(--slate); margin-bottom: 10px; }
+.metric-value-row { display: flex; align-items: baseline; gap: 10px; }
+.metric-value { font-family: var(--serif); font-size: 34px; font-weight: 600; color: var(--ink); letter-spacing: -1px; line-height: 1; }
+.metric-unit { font-family: var(--mono); font-size: 12px; color: var(--slate); }
+.metric-trend { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; font-size: 12px; font-weight: 500; padding: 3px 8px; border-radius: 4px; }
+.trend-up { color: var(--vermillion); background: var(--vermillion-wash); }
+.trend-down { color: var(--sage); background: var(--sage-wash); }
+.trend-stable { color: var(--slate); background: var(--ivory-warm); }
+.gauge-track { height: 5px; background: var(--parchment); border-radius: 3px; overflow: hidden; margin-top: 12px; }
+.gauge-fill { height: 100%; border-radius: 3px; transition: width 0.8s cubic-bezier(0.4,0,0.2,1); }
+.gauge-low { background: var(--sage); }
+.gauge-moderate { background: var(--navy-light); }
+.gauge-elevated { background: var(--amber); }
+.gauge-high { background: var(--vermillion); }
+
+/* ═══ SECTION CARDS ═══ */
+.section-card { background: #fff; border: 1px solid var(--parchment); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); margin-bottom: 20px; overflow: hidden; }
+.section-header { display: flex; justify-content: space-between; align-items: center; padding: 18px 24px; border-bottom: 1px solid var(--parchment); }
+.section-title { font-family: var(--serif); font-size: 18px; font-weight: 600; color: var(--ink); letter-spacing: -0.2px; }
+.section-badge { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding: 4px 10px; border-radius: 4px; }
+.badge-navy { background: var(--navy-wash); color: var(--navy); }
+.badge-copper { background: var(--copper-wash); color: var(--copper); }
+.badge-sage { background: var(--sage-wash); color: var(--sage); }
+.badge-amber { background: var(--amber-wash); color: var(--amber); }
+.section-body { padding: 20px 24px; }
+
+/* ═══ EXEC SUMMARY ═══ */
+.exec-summary {
+    background: linear-gradient(135deg, var(--navy-tint) 0%, #fff 100%);
+    border: 1px solid var(--navy-wash); border-left: 4px solid var(--navy);
+    border-radius: 2px var(--radius-lg) var(--radius-lg) 2px;
+    padding: 24px 28px; margin-bottom: 24px;
+}
+.exec-summary-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: var(--navy-mid); margin-bottom: 10px; }
+.exec-summary-text { font-family: var(--serif); font-size: 17px; line-height: 1.65; color: var(--charcoal); }
+.exec-summary-meta { display: flex; align-items: center; gap: 16px; margin-top: 14px; font-size: 12px; color: var(--slate); flex-wrap: wrap; }
+.exec-summary-meta span { display: flex; align-items: center; gap: 5px; }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+/* ═══ SIGNALS ═══ */
+.signal-list { list-style: none; }
+.signal-item { display: flex; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--ivory-warm); }
+.signal-item:last-child { border-bottom: none; }
+.signal-indicator { width: 3px; min-height: 100%; border-radius: 2px; flex-shrink: 0; margin-top: 2px; }
+.signal-indicator.high { background: var(--vermillion); }
+.signal-indicator.medium { background: var(--amber); }
+.signal-indicator.low { background: var(--sage); }
+.signal-body { flex:1; min-width:0; }
+.signal-title { font-size: 13px; font-weight: 600; color: var(--charcoal); margin-bottom: 3px; }
+.signal-desc { font-size: 13px; color: var(--slate); line-height: 1.5; }
+.signal-meta { display: flex; gap: 12px; margin-top: 6px; font-size: 11px; color: var(--stone); }
+.signal-meta .tag { font-family: var(--mono); font-size: 10px; font-weight: 500; padding: 2px 6px; border-radius: 3px; background: var(--ivory-warm); color: var(--slate); }
+
+/* ═══ COLLISIONS ═══ */
+.collision-item { border: 1px solid var(--parchment); border-left: 3px solid var(--amber); border-radius: 2px var(--radius) var(--radius) 2px; padding: 16px 20px; margin-bottom: 12px; background: #fff; }
+.collision-grid { display: grid; grid-template-columns: 1fr 36px 1fr; gap: 8px; align-items: start; }
+.collision-source { font-family: var(--mono); font-size: 10px; font-weight: 500; color: var(--stone); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 5px; }
+.collision-text { font-size: 13px; line-height: 1.55; }
+.collision-claim { color: var(--charcoal); }
+.collision-contra { color: var(--copper); font-weight: 500; }
+.collision-divider { display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: var(--stone); letter-spacing: 1px; padding-top: 18px; }
+
+/* ═══ ADVISORY ═══ */
+.advisory-item { background: var(--navy-tint); border: 1px solid var(--navy-wash); border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 12px; }
+.advisory-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.6px; color: var(--navy-mid); margin-bottom: 8px; }
+.advisory-text { font-family: var(--serif); font-size: 15px; line-height: 1.6; color: var(--charcoal); font-weight: 500; }
+.advisory-options { margin-top: 10px; padding-left: 18px; font-size: 13px; color: var(--slate); line-height: 1.7; }
+.advisory-timing { margin-top: 10px; font-size: 12px; font-weight: 500; color: var(--navy-light); font-style: italic; }
+
+/* ═══ DOCUMENTS ═══ */
+.doc-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--ivory-warm); gap: 16px; font-size: 13px; }
+.doc-row:last-child { border-bottom: none; }
+.doc-type-badge { font-family: var(--mono); font-size: 10px; font-weight: 500; min-width: 64px; text-align: center; padding: 3px 8px; border-radius: 4px; background: var(--ivory-warm); color: var(--slate); text-transform: uppercase; letter-spacing: 0.3px; }
+.doc-title-text { flex:1; color: var(--charcoal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.doc-date { font-family: var(--mono); font-size: 11px; color: var(--stone); white-space: nowrap; }
+
+/* ═══ MODAL ═══ */
+.overlay { display: none; position: fixed; inset:0; background: rgba(28,25,22,0.35); backdrop-filter: blur(4px); z-index: 200; justify-content: center; align-items: center; }
+.overlay.open { display: flex; }
+.modal { background: #fff; border: 1px solid var(--parchment); border-radius: var(--radius-lg); padding: 32px; width: 440px; max-width: 92vw; box-shadow: var(--shadow-lg); animation: modalIn 0.25s ease; }
+@keyframes modalIn { from { opacity:0; transform: translateY(12px) scale(0.98); } to { opacity:1; transform: translateY(0) scale(1); } }
+.modal-title { font-family: var(--serif); font-size: 22px; font-weight: 600; color: var(--ink); margin-bottom: 24px; letter-spacing: -0.3px; }
+.field { margin-bottom: 18px; }
+.field label { display: block; font-size: 12px; font-weight: 600; color: var(--slate); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
+.field input { width: 100%; padding: 10px 14px; background: var(--ivory); border: 1px solid var(--sand); border-radius: var(--radius); color: var(--ink); font-family: var(--sans); font-size: 14px; transition: border-color var(--transition), box-shadow var(--transition); }
+.field input:focus { outline: none; border-color: var(--navy-light); box-shadow: 0 0 0 3px var(--navy-wash); }
+.field input::placeholder { color: var(--stone); }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 28px; }
+
+/* ═══ STATES ═══ */
+.empty { text-align: center; padding: 80px 48px; }
+.empty-icon { width: 64px; height: 64px; border: 2px solid var(--parchment); border-radius: 16px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--stone); }
+.empty h3 { font-family: var(--serif); font-size: 22px; font-weight: 600; color: var(--charcoal); margin-bottom: 8px; }
+.empty p { font-size: 14px; color: var(--slate); margin-bottom: 24px; max-width: 400px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+.no-data { padding: 32px; text-align: center; color: var(--stone); font-size: 13px; font-style: italic; }
+
+.toasts { position: fixed; bottom: 28px; right: 28px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+.toast { background: #fff; border: 1px solid var(--parchment); border-radius: var(--radius); padding: 12px 18px; font-size: 13px; color: var(--charcoal); min-width: 300px; box-shadow: var(--shadow-lg); animation: toastIn 0.3s ease; display: flex; align-items: center; gap: 10px; }
+.toast::before { font-size: 16px; flex-shrink: 0; }
+.toast-success { border-left: 3px solid var(--sage); }
+.toast-success::before { content: '✓'; color: var(--sage); }
+.toast-error { border-left: 3px solid var(--vermillion); }
+.toast-error::before { content: '✕'; color: var(--vermillion); }
+.toast-info { border-left: 3px solid var(--navy-light); }
+.toast-info::before { content: '→'; color: var(--navy-light); }
+@keyframes toastIn { from { transform: translateX(100%); opacity:0; } to { transform: translateX(0); opacity:1; } }
+
+.spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid var(--parchment); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px; gap: 14px; color: var(--slate); font-size: 13px; }
+
+@media (max-width:1200px) { .metrics-strip { grid-template-columns: repeat(2,1fr); } }
+@media (max-width:960px) { .sidebar { width:0; overflow:hidden; } .main { margin-left:0; } .grid-2 { grid-template-columns:1fr; } .content { padding:20px; } .topbar { padding:0 20px; } }
+</style>
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="mark">SM</div>
+                <div><h1>Signal Monitor</h1><div class="subtitle">Narrative & Governance</div></div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-label">Monitored Entities</div>
+            <ul class="nav-list" id="companyList"></ul>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="btn-add" onclick="showModal('addModal')">+ Add Company</button>
+        </div>
+    </aside>
+    <div class="main">
+        <header class="topbar">
+            <div class="topbar-left">
+                <div class="topbar-title" id="topbarTitle">Signal Monitor</div>
+                <div class="topbar-sector" id="topbarSector" style="display:none"></div>
+            </div>
+            <div class="topbar-actions">
+                <button class="btn btn-sm" id="btnIngest" onclick="triggerIngestion()" disabled>Ingest Sources</button>
+                <button class="btn btn-sm" id="btnAnalyze" onclick="runFullPipeline()" disabled>Run Analysis</button>
+                <button class="btn btn-sm btn-primary" id="btnReport" onclick="generateReport()" disabled>Generate Diagnostic</button>
+            </div>
+        </header>
+        <div class="content" id="contentArea">
+            <div class="empty">
+                <div class="empty-icon">◇</div>
+                <h3>No Entity Selected</h3>
+                <p>Add a public company to begin monitoring its narrative positioning, governance posture, and risk exposure relative to peers.</p>
+                <button class="btn btn-primary" onclick="showModal('addModal')">Add Company</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="overlay" id="addModal">
+    <div class="modal">
+        <div class="modal-title">Add Company</div>
+        <div class="field"><label>Company Name</label><input id="inputName" placeholder="e.g. Apple Inc."></div>
+        <div class="field"><label>Ticker</label><input id="inputTicker" placeholder="e.g. AAPL" style="text-transform:uppercase"></div>
+        <div class="field"><label>Sector</label><input id="inputSector" placeholder="e.g. Technology"></div>
+        <div class="modal-actions">
+            <button class="btn" onclick="closeModal('addModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="addCompany()">Add to Monitor</button>
+        </div>
+    </div>
+</div>
+<div class="toasts" id="toasts"></div>
+<script>
+let companies=[], sel=null;
+async function api(p,o={}){const r=await fetch(p,{headers:{'Content-Type':'application/json'},...o});if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e.detail||r.statusText)}return r.json()}
+function toast(m,t='info'){const c=document.getElementById('toasts'),el=document.createElement('div');el.className=`toast toast-${t}`;el.textContent=m;c.appendChild(el);setTimeout(()=>el.remove(),5000)}
+function showModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+
+async function loadCompanies(){try{companies=await api('/api/companies/');renderNav()}catch(e){}}
+function renderNav(){
+    document.getElementById('companyList').innerHTML=companies.map(c=>
+        `<li class="nav-item ${sel?.id===c.id?'active':''}" onclick="selectCompany(${c.id})"><span class="ticker-badge">${c.ticker}</span><span class="co-name">${c.name}</span></li>`
+    ).join('')||'<li style="padding:12px;font-size:12px;color:rgba(255,255,255,0.3)">No companies yet</li>';
+}
+async function selectCompany(id){
+    try{sel=await api(`/api/companies/${id}`)}catch(e){sel=companies.find(c=>c.id===id)}
+    document.getElementById('topbarTitle').textContent=sel.name;
+    const s=document.getElementById('topbarSector');
+    if(sel.sector){s.textContent=sel.sector;s.style.display=''}else{s.style.display='none'}
+    ['btnIngest','btnAnalyze','btnReport'].forEach(b=>document.getElementById(b).disabled=false);
+    renderNav();renderDashboard();
+}
+async function addCompany(){
+    const name=document.getElementById('inputName').value.trim(),ticker=document.getElementById('inputTicker').value.trim().toUpperCase(),sector=document.getElementById('inputSector').value.trim();
+    if(!name||!ticker){toast('Name and ticker are required','error');return}
+    try{const c=await api('/api/companies/',{method:'POST',body:JSON.stringify({name,ticker,sector})});toast(`${ticker} added to monitor`,'success');closeModal('addModal');['inputName','inputTicker','inputSector'].forEach(id=>document.getElementById(id).value='');await loadCompanies();selectCompany(c.id)}catch(e){toast(e.message,'error')}
+}
+
+async function triggerIngestion(){
+    if(!sel)return;const btn=document.getElementById('btnIngest');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Ingesting…';toast(`Collecting public sources for ${sel.ticker}…`,'info');
+    try{const r=await api(`/api/ingest/${sel.id}/sync`,{method:'POST',body:JSON.stringify({source_types:['sec_filing','news','press_release']})});const n=Object.values(r.results).reduce((s,x)=>s+(x.documents_ingested||0),0);toast(`${n} documents ingested for ${sel.ticker}`,'success');sel=await api(`/api/companies/${sel.id}`);renderDashboard()}catch(e){toast(`Ingestion failed: ${e.message}`,'error')}finally{btn.disabled=false;btn.textContent='Ingest Sources'}
+}
+async function runFullPipeline(){
+    if(!sel)return;const btn=document.getElementById('btnAnalyze');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Analyzing…';toast(`Running full analysis pipeline for ${sel.ticker}…`,'info');
+    try{await api(`/api/analysis/${sel.id}/run-full-pipeline`,{method:'POST'});toast('Analysis pipeline complete','success');renderDashboard()}catch(e){toast(`Analysis error: ${e.message}`,'error')}finally{btn.disabled=false;btn.textContent='Run Analysis'}
+}
+async function generateReport(){
+    if(!sel)return;const btn=document.getElementById('btnReport');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Generating…';
+    try{await api(`/api/analysis/${sel.id}/diagnostic`,{method:'POST'});toast('Diagnostic report generated','success');renderDashboard()}catch(e){toast(`Report error: ${e.message}`,'error')}finally{btn.disabled=false;btn.textContent='Generate Diagnostic'}
+}
+function downloadPDF(id){window.open(`/api/analysis/${sel.id}/diagnostics/${id}/pdf`,'_blank')}
+
+function sevClass(s){return s>=0.7?'high':s>=0.4?'medium':'low'}
+function trendHTML(d){if(d==='increasing')return'<span class="metric-trend trend-up">▲ Increasing</span>';if(d==='decreasing')return'<span class="metric-trend trend-down">▼ Decreasing</span>';return'<span class="metric-trend trend-stable">— Stable</span>'}
+function gaugeClass(v){if(v>=0.75)return'gauge-high';if(v>=0.50)return'gauge-elevated';if(v>=0.25)return'gauge-moderate';return'gauge-low'}
+
+async function renderDashboard(){
+    if(!sel)return;const area=document.getElementById('contentArea');
+    area.innerHTML='<div class="loading-state"><div class="spinner"></div>Loading diagnostic view…</div>';
+    const[narrative,governance,collisions,accumulation,diagnostics,docs]=await Promise.allSettled([
+        api(`/api/analysis/${sel.id}/narrative`),api(`/api/analysis/${sel.id}/governance`),
+        api(`/api/analysis/${sel.id}/collisions`),api(`/api/analysis/${sel.id}/accumulation`),
+        api(`/api/analysis/${sel.id}/diagnostics`),api(`/api/ingest/${sel.id}/documents?limit=10`)
+    ]);
+    const narr=narrative.value||{scores:[],themes:[]},gov=governance.value||{scores:[],signals:[]},coll=collisions.value||[],accum=accumulation.value||[],diags=diagnostics.value||[],docList=docs.value||[];
+    const dc=sel.document_counts||{},totalDocs=Object.values(dc).reduce((s,v)=>s+v,0),la=accum[0]||{},lg=gov.scores?.[0]||{},latestDiag=diags[0];
+    let h='';
+
+    h+=`<div class="metrics-strip">
+        <div class="metric-card"><div class="metric-label">Documents Ingested</div><div class="metric-value-row"><div class="metric-value">${totalDocs}</div></div><div style="margin-top:8px;font-size:11px;color:var(--stone)">${Object.entries(dc).map(([k,v])=>`${k.replace('_',' ')}: ${v}`).join(' · ')||'No sources ingested yet'}</div></div>
+        <div class="metric-card"><div class="metric-label">Issue Accumulation · 90 Day</div><div class="metric-value-row"><div class="metric-value">${la.total_score!=null?la.total_score.toFixed(2):'—'}</div>${la.intensity?`<div class="metric-unit">${la.intensity}</div>`:''}</div>${la.direction?trendHTML(la.direction):'<span class="metric-trend trend-stable">No data yet</span>'}${la.total_score!=null?`<div class="gauge-track"><div class="gauge-fill ${gaugeClass(la.total_score)}" style="width:${Math.max(la.total_score*100,2)}%"></div></div>`:''}</div>
+        <div class="metric-card"><div class="metric-label">Governance Pressure</div><div class="metric-value-row"><div class="metric-value">${lg.overall_pressure_score!=null?lg.overall_pressure_score.toFixed(2):'—'}</div></div>${lg.overall_pressure_score!=null?`<div class="gauge-track"><div class="gauge-fill ${gaugeClass(lg.overall_pressure_score)}" style="width:${Math.max(lg.overall_pressure_score*100,2)}%"></div></div>`:'<span class="metric-trend trend-stable">No data yet</span>'}</div>
+        <div class="metric-card"><div class="metric-label">Narrative Collisions</div><div class="metric-value-row"><div class="metric-value">${coll.length}</div><div class="metric-unit">detected</div></div><span class="metric-trend trend-stable">across source channels</span></div>
+    </div>`;
+
+    if(latestDiag){h+=`<div class="exec-summary"><div class="exec-summary-label">Executive Summary — ${latestDiag.report_type} Diagnostic</div><div class="exec-summary-text">${latestDiag.full_report_text||'No summary available.'}</div><div class="exec-summary-meta"><span>Period: ${latestDiag.period}</span><span>Generated: ${new Date(latestDiag.generated_at).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</span><button class="btn btn-sm" onclick="downloadPDF(${latestDiag.id})" style="margin-left:auto">Download PDF</button></div></div>`}
+
+    h+='<div class="grid-2">';
+    h+='<div class="section-card"><div class="section-header"><div class="section-title">Narrative Themes</div><span class="section-badge badge-navy">Module 1</span></div><div class="section-body">';
+    if(narr.scores?.length){h+='<ul class="signal-list">'+narr.scores.slice(0,6).map(s=>`<li class="signal-item"><div class="signal-indicator ${s.defensive_language_score>0.5?'high':s.frequency_score>0.6?'medium':'low'}"></div><div class="signal-body"><div class="signal-title">${s.theme}</div><div class="signal-desc">Frequency ${(s.frequency_score||0).toFixed(2)} · Consistency ${(s.consistency_score||0).toFixed(2)}${s.defensive_language_score>0?' · Defensive language detected':''}</div><div class="signal-meta"><span class="tag">${s.period}</span></div></div></li>`).join('')+'</ul>'}else{h+='<div class="no-data">Run analysis to extract narrative positioning themes.</div>'}
+    h+='</div></div>';
+    h+='<div class="section-card"><div class="section-header"><div class="section-title">Governance Signals</div><span class="section-badge badge-copper">Module 2</span></div><div class="section-body">';
+    if(gov.signals?.length){h+='<ul class="signal-list">'+gov.signals.slice(0,6).map(s=>`<li class="signal-item"><div class="signal-indicator ${sevClass(s.severity)}"></div><div class="signal-body"><div class="signal-title">${s.signal_type.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase())}</div><div class="signal-desc">${s.description}</div><div class="signal-meta"><span class="tag">${s.source_date||s.detected_at?.slice(0,10)||''}</span></div></div></li>`).join('')+'</ul>'}else{h+='<div class="no-data">Run analysis to detect governance pressure signals.</div>'}
+    h+='</div></div></div>';
+
+    if(coll.length){h+='<div class="section-card"><div class="section-header"><div class="section-title">Narrative Collisions</div><span class="section-badge badge-amber">Module 3</span></div><div class="section-body">';h+=coll.slice(0,4).map(c=>`<div class="collision-item"><div class="collision-grid"><div><div class="collision-source">${c.claim_source||'Company Claim'}</div><div class="collision-text collision-claim">${c.claim_summary}</div></div><div class="collision-divider">VS</div><div><div class="collision-source">${c.contradicting_source||'External'}</div><div class="collision-text collision-contra">${c.contradiction_summary}</div></div></div></div>`).join('');h+='</div></div>'}
+
+    if(latestDiag){try{const full=await api(`/api/analysis/${sel.id}/diagnostics/${latestDiag.id}`);const impls=full.advisory_implications_json||[];if(impls.length){h+='<div class="section-card"><div class="section-header"><div class="section-title">Advisory Implications</div><span class="section-badge badge-sage">Options</span></div><div class="section-body">';h+=impls.map(a=>`<div class="advisory-item"><div class="advisory-label">Advisory Option</div><div class="advisory-text">${a.implication}</div>${a.options?.length?`<ul class="advisory-options">${a.options.map(o=>`<li>${o}</li>`).join('')}</ul>`:''}${a.timing?`<div class="advisory-timing">Timing: ${a.timing.replace(/_/g,' ')}</div>`:''}</div>`).join('');h+='</div></div>'}}catch(e){}}
+
+    if(docList.length){h+='<div class="section-card"><div class="section-header"><div class="section-title">Recent Documents</div><span class="section-badge badge-navy">'+docList.length+' latest</span></div><div class="section-body">';h+=docList.map(d=>`<div class="doc-row"><span class="doc-type-badge">${d.filing_type||d.source_type.replace('_',' ')}</span><span class="doc-title-text">${d.title||'Untitled'}</span><span class="doc-date">${d.published_date?.slice(0,10)||''}</span></div>`).join('');h+='</div></div>'}
+
+    area.innerHTML=h;
+}
+loadCompanies();
+</script>
+</body>
+</html>
