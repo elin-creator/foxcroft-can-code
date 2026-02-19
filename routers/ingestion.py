@@ -13,6 +13,98 @@ from services.news_ingestion import ingest_news, ingest_press_releases
 router = APIRouter(prefix="/api/ingest", tags=["ingestion"])
 
 
+# ─── DEBUG ROUTE MUST BE BEFORE /{company_id} ROUTES ───
+
+
+@router.get("/debug/connectivity")
+async def debug_connectivity():
+    """Test connectivity to all external data sources. Use this to diagnose ingestion failures."""
+    import httpx
+    import os
+    results = {}
+
+    # Test SEC EDGAR - company tickers
+    try:
+        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+            resp = await client.get(
+                "https://data.sec.gov/files/company_tickers.json",
+                headers={
+                    "User-Agent": "SignalMonitor/1.0 (admin@signalmonitor.app)",
+                    "Accept": "application/json",
+                    "Accept-Encoding": "gzip, deflate",
+                }
+            )
+            results["sec_tickers"] = {"status": resp.status_code, "ok": resp.status_code == 200, "size": len(resp.content)}
+    except Exception as e:
+        results["sec_tickers"] = {"status": "error", "error": str(e)}
+
+    # Test SEC EDGAR - submissions API (Apple)
+    try:
+        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+            resp = await client.get(
+                "https://data.sec.gov/submissions/CIK0000320193.json",
+                headers={
+                    "User-Agent": "SignalMonitor/1.0 (admin@signalmonitor.app)",
+                    "Accept": "application/json",
+                    "Accept-Encoding": "gzip, deflate",
+                }
+            )
+            results["sec_submissions"] = {"status": resp.status_code, "ok": resp.status_code == 200, "size": len(resp.content)}
+    except Exception as e:
+        results["sec_submissions"] = {"status": "error", "error": str(e)}
+
+    # Test SEC EDGAR - EFTS full text search
+    try:
+        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+            resp = await client.get(
+                "https://efts.sec.gov/LATEST/search-index?q=Apple&dateRange=custom&startdt=2025-01-01&enddt=2025-12-31",
+                headers={
+                    "User-Agent": "SignalMonitor/1.0 (admin@signalmonitor.app)",
+                    "Accept": "application/json",
+                }
+            )
+            results["sec_fulltext"] = {"status": resp.status_code, "ok": resp.status_code == 200, "size": len(resp.content)}
+    except Exception as e:
+        results["sec_fulltext"] = {"status": "error", "error": str(e)}
+
+    # Test Google News RSS
+    try:
+        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+            resp = await client.get(
+                "https://news.google.com/rss/search?q=Apple+stock&hl=en-US&gl=US&ceid=US:en&when=7d",
+                headers={"User-Agent": "Mozilla/5.0 (compatible; SignalMonitor/1.0)"}
+            )
+            results["google_news"] = {"status": resp.status_code, "ok": resp.status_code == 200, "size": len(resp.content)}
+    except Exception as e:
+        results["google_news"] = {"status": "error", "error": str(e)}
+
+    # Test Yahoo Finance RSS
+    try:
+        async with httpx.AsyncClient(timeout=15, follow_redirects=True) as client:
+            resp = await client.get(
+                "https://finance.yahoo.com/news/rssindex",
+                headers={"User-Agent": "Mozilla/5.0 (compatible; SignalMonitor/1.0)"}
+            )
+            results["yahoo_finance"] = {"status": resp.status_code, "ok": resp.status_code == 200, "size": len(resp.content)}
+    except Exception as e:
+        results["yahoo_finance"] = {"status": "error", "error": str(e)}
+
+    # Test Anthropic API key
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    results["anthropic_key_set"] = bool(api_key and api_key.startswith("sk-"))
+
+    working = sum(1 for v in results.values() if isinstance(v, dict) and v.get("ok"))
+    total = sum(1 for v in results.values() if isinstance(v, dict))
+
+    return {
+        "summary": f"{working}/{total} sources reachable",
+        "results": results,
+    }
+
+
+# ─── COMPANY-SPECIFIC ROUTES ───
+
+
 async def _run_ingestion(company_id: int, ticker: str, company_name: str, source_types: list[str]):
     """Background ingestion task."""
     db = await get_db()
