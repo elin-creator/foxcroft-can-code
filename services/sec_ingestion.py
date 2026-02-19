@@ -37,7 +37,7 @@ async def lookup_cik(ticker: str) -> Optional[str]:
     headers = {**HEADERS, "Host": "data.sec.gov"}
     async with httpx.AsyncClient(headers=headers, timeout=30, follow_redirects=True) as client:
         try:
-            resp = await client.get(f"{SEC_FILINGS}/files/company_tickers.json")
+            resp = await client.get(f"https://www.sec.gov/files/company_tickers.json")
             if resp.status_code == 200:
                 data = resp.json()
                 for entry in data.values():
